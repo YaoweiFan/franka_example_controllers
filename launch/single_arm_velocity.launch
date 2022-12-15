@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="robot_ip" default="172.16.0.2"/>
+    <arg name="ft_sensor_ip" default="172.16.0.4"/>
+    <arg name="arm_id" default="panda_1"/>
+    <arg name="load_gripper" default="true" />
+    <arg name="fz_bias"   default="7.85943" />
+    <arg name="ee2ft_posz"   default="-0.123" />
+    <arg name="handcm2ft_posx"   default="0.000459347" />
+    <arg name="handcm2ft_posy"   default="-0.00926632" />
+    <arg name="handcm2ft_posz"   default="-0.0453254" />
+
+    <!-- <node pkg="rosbag" type="record" name="bag_record" 
+            args="/panda_1/cartesian_admittance_controller_velocity/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/> -->
+
+    <group ns="$(arg arm_id)">
+        <group ns="cartesian_admittance_controller_velocity">
+            <include file="$(find ati_sensor)/launch/ft_sensor.launch" >
+                <arg name="ip" value="$(arg ft_sensor_ip)" />
+            </include>
+            <param name="fz_bias"   value="$(arg fz_bias)" />
+            <param name="ee2ft_posz"   value="$(arg ee2ft_posz)" />
+            <param name="handcm2ft_posx"   value="$(arg handcm2ft_posx)" />
+            <param name="handcm2ft_posy"   value="$(arg handcm2ft_posy)" />
+            <param name="handcm2ft_posz"   value="$(arg handcm2ft_posz)" />
+        </group>  
+
+        <include file="$(find franka_control)/launch/franka_control.launch" >
+            <arg name="robot_ip" value="$(arg robot_ip)" />
+            <arg name="load_gripper" value="$(arg load_gripper)" />
+        </include>
+        <rosparam command="load" file="$(find franka_example_controllers)/config/franka_example_controllers.yaml" />
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_admittance_controller_velocity"/>
+    
+    </group>
+
+    <!-- <node name="single_publish_node" pkg="franka_example_controllers" type="single_publish_node.py" output="screen">
+        <param name="link_name_1" value="panda_link0" />
+        <remap from="panda_1_equilibrium_pose" to="/panda_1/cartesian_admittance_controller/equilibrium_pose" />
+    </node> -->
+
+    <!-- <node pkg="rviz" type="rviz" output="screen" name="rviz" /> -->
+</launch>

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="rosbag" type="record" name="bag_record" 
+          args="/cartesian_admittance_controller_velocity/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/>
+
+ <include file="$(find franka_example_controllers)/launch/cartesian_admittance_controller_velocity.launch">
+   <arg name="robot_ip"     value="172.16.0.2" />
+ </include>
+
+ <!-- <node name="publish_node_test" pkg="franka_example_controllers" type="publish_node_test.py" output="screen">
+   <param name="link_name_1" value="link0" />
+   <remap from="panda_1_equilibrium_pose" to="cartesian_admittance_controller_velocity/equilibrium_pose" />
+ </node> -->
+
+</launch>

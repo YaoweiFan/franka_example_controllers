@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="rosbag" type="record" name="bag_record" 
+            args="/panda_1/cartesian_admittance_controller_velocity/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/>
+
+    <include file="$(find franka_example_controllers)/launch/single_arm_velocity.launch">
+        <arg name="robot_ip" value="172.16.0.2" />
+        <arg name="ft_sensor_ip" default="172.16.0.4"/>
+        <arg name="arm_id"   value="panda_1" />
+        <arg name="fz_bias"   value="7.85943" />
+        <arg name="ee2ft_posz"   value="-0.123" />
+        <arg name="handcm2ft_posx"   value="0.000459347" />
+        <arg name="handcm2ft_posy"   value="-0.00926632" />
+        <arg name="handcm2ft_posz"   value="-0.0453254" />
+    </include>
+
+    <include file="$(find franka_example_controllers)/launch/single_arm_velocity.launch">
+        <arg name="robot_ip" value="172.16.0.3" />
+        <arg name="ft_sensor_ip" default="172.16.0.5"/>
+        <arg name="arm_id"   value="panda_2" />
+        <arg name="fz_bias"   value="7.73683" />
+        <arg name="ee2ft_posz"   value="-0.114" />
+        <arg name="handcm2ft_posx"   value="-0.0046692" />
+        <arg name="handcm2ft_posy"   value="-0.0048005" />
+        <arg name="handcm2ft_posz"   value="-0.0319475" />
+    </include>
+
+    <node name="publish_node" pkg="franka_example_controllers" type="publish_node.py" output="screen">
+        <param name="link_name_1" value="panda_link0" />
+        <param name="link_name_2" value="panda_link0" />
+        <remap from="panda_1_equilibrium_pose" to="panda_1/cartesian_admittance_controller_velocity/equilibrium_pose" />
+        <remap from="panda_2_equilibrium_pose" to="panda_2/cartesian_admittance_controller_velocity/equilibrium_pose" />
+    </node>
+
+    <!-- <node pkg="rviz" type="rviz" output="screen" name="rviz" /> -->
+</launch>
+
+
+
+

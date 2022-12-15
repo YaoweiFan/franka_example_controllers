@@ -1,0 +1,26 @@
+float64 error_pos_x
+float64 error_pos_y
+float64 error_pos_z
+float64 error_ori_x
+float64 error_ori_y
+float64 error_ori_z
+float64 ef_fx
+float64 ef_fy
+float64 ef_fz
+float64 ef_tx
+float64 ef_ty
+float64 ef_tz
+float64 desired_wrench_fx
+float64 desired_wrench_fy
+float64 desired_wrench_fz
+float64 desired_wrench_tx
+float64 desired_wrench_ty
+float64 desired_wrench_tz
+float64 decoupled_wrench_fx
+float64 decoupled_wrench_fy
+float64 decoupled_wrench_fz
+float64 decoupled_wrench_tx
+float64 decoupled_wrench_ty
+float64 decoupled_wrench_tz
+
+
