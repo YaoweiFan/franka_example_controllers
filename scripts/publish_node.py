@@ -8,7 +8,7 @@ import numpy as np
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import WrenchStamped
 from franka_msgs.msg import FrankaState
-from runner import Runner
+from runner.rnn_runner import Runner
 
 import actionlib
 from franka_gripper.msg import GraspAction, GraspGoal, GraspEpsilon, MoveAction, MoveGoal
@@ -126,8 +126,8 @@ if __name__ == "__main__":
 
     runner = Runner()
 
-    print "============ Press `Enter` to open both grippers ..."
-    raw_input()
+    print("============ Press `Enter` to open both grippers ...")
+    input()
 
     # panda1 gripper open hand
     panda1_move_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/move", MoveAction)
@@ -147,8 +147,8 @@ if __name__ == "__main__":
     panda2_move_client.wait_for_result()
     print("panda2's hand opened!")
 
-    print "============ Press `Enter` to close gripper1 ..."
-    raw_input()
+    print("============ Press `Enter` to close gripper1 ...")
+    input()
 
     # panda1 gripper grasp obj
     panda1_grasp_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/grasp", GraspAction)
@@ -160,8 +160,8 @@ if __name__ == "__main__":
     panda1_grasp_client.wait_for_result()
     print("panda1 grasped object!")
 
-    print "============ Press `Enter` to close gripper2 ..."
-    raw_input()
+    print("============ Press `Enter` to close gripper2 ...")
+    input()
 
     # panda2 gripper grasp obj
     panda2_grasp_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/grasp", GraspAction)
@@ -173,8 +173,8 @@ if __name__ == "__main__":
     panda2_grasp_client.wait_for_result()
     print("panda2 grasped object!")
 
-    print "============ Press `Enter` to start policy ..."
-    raw_input()
+    print("============ Press `Enter` to start policy ...")
+    input()
 
     panda1_obs = np.zeros(19)
     panda2_obs = np.zeros(19)
@@ -240,8 +240,8 @@ if __name__ == "__main__":
         # panda1_pose["position"] -= np.array([0, 0, 0.002])
         # panda2_pose["position"] -= np.array([0, 0, 0.002])
 
-        print "============ Press `Enter` to execute a step ..."
-        raw_input()
+        print("============ Press `Enter` to execute a step ...")
+        input()
 
         # update new equilibrium pose, delta_pos: 2*3
         set_pub_msgs(link_name_1, link_name_2)

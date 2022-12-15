@@ -1,21 +1,19 @@
 import os
-from actor.basic_controller import BasicMAC
+from actor.rnn_controller import Controller
 import numpy as np
 import pandas as pd
 from utils.my_vec_normalize import VecNormalize
-import pickle
 from prettytable import PrettyTable
 
 class Runner:
 
     def __init__(self):
-
-        self.mac = BasicMAC()
-        self.mac.init_hidden()
         self.record = False
         self.steps = 0
         self.data_path = os.path.join(os.path.dirname(__file__), "data/state_check.csv")
-        self.vn = VecNormalize.load(os.path.join(os.path.dirname(__file__), "actor/parameters/my_vec_normalize2.pkl"))
+        self.vn = VecNormalize.load(os.path.join(os.path.dirname(__file__), "actor/parameters/vec_normalize_dict.pkl"))
+        self.controller = Controller()
+        self.controller.init_hidden()
 
     def single_action_to_delta_pos(self, action):
         if action == 0:
@@ -48,12 +46,11 @@ class Runner:
         return np.array([delta_pos_1, delta_pos_2])
 
     def step(self, obs, avail_actions):
-
         transition = {
             "avail_actions": avail_actions,
             "obs": self.vn.normalize_obs(obs)
         }
-        actions = self.mac.select_actions(transition)
+        actions = self.controller.select_actions(transition)
 
         action_table = PrettyTable(['Pacts', 'Qacts'])
         action_table.add_row([actions[0], actions[1]])

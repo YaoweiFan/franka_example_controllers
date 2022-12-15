@@ -4,7 +4,6 @@ from torch.distributions import Categorical
 class MultinomialActionSelector():
 
     def __init__(self):
-        # 0.05
         self.epsilon = 0.01
         self.test_greedy = False
 
