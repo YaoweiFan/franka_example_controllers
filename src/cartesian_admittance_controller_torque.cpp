@@ -255,6 +255,8 @@ void CartesianAdmittanceControllerTorque::update(const ros::Time& /* time */,
   // std::cout << desired_wrench << std::endl;
 
   Vector6d decoupled_wrench = lambda * desired_wrench;
+
+  // osc or impedance?
   // tau_task << jacobian.transpose() * (decoupled_wrench - ef);
   tau_task << jacobian.transpose() * decoupled_wrench;
 
@@ -275,6 +277,8 @@ void CartesianAdmittanceControllerTorque::update(const ros::Time& /* time */,
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
+  // osc or impedance?
+  // tau_d << tau_task + tau_nullspace + coriolis + jacobian.transpose() * ef;
   tau_d << tau_task + tau_nullspace + coriolis;
 
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
