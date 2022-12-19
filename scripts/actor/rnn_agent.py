@@ -4,29 +4,29 @@ import numpy as np
 class RNNAgent():
     def __init__(self):
         # 64*42
-        self.fc1_weight = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/fc1_weight.txt'))
+        self.fc1_weight = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/fc1_weight.txt'))
         # 64
-        self.fc1_bias = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/fc1_bias.txt'))
+        self.fc1_bias = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/fc1_bias.txt'))
 
         # 64*64
-        self.w_ir = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_wir.txt'))
-        self.w_iz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_wiz.txt'))
-        self.w_in = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_win.txt'))
-        self.w_hr = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_whr.txt'))
-        self.w_hz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_whz.txt'))
-        self.w_hn = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_whn.txt'))
+        self.w_ir = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_wir.txt'))
+        self.w_iz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_wiz.txt'))
+        self.w_in = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_win.txt'))
+        self.w_hr = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_whr.txt'))
+        self.w_hz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_whz.txt'))
+        self.w_hn = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_whn.txt'))
         # 64
-        self.b_ir = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_bir.txt'))
-        self.b_iz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_biz.txt'))
-        self.b_in = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_bin.txt'))
-        self.b_hr = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_bhr.txt'))
-        self.b_hz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_bhz.txt'))
-        self.b_hn = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/gru_bhn.txt'))
+        self.b_ir = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_bir.txt'))
+        self.b_iz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_biz.txt'))
+        self.b_in = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_bin.txt'))
+        self.b_hr = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_bhr.txt'))
+        self.b_hz = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_bhz.txt'))
+        self.b_hn = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/gru_bhn.txt'))
 
         # 7*64
-        self.fc2_weight = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/fc2_weight.txt'))
+        self.fc2_weight = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/fc2_weight.txt'))
         # 7
-        self.fc2_bias = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/fc2_bias.txt'))
+        self.fc2_bias = np.loadtxt(os.path.join(os.path.dirname(__file__), 'parameters/discrete/params/fc2_bias.txt'))
 
     def relu(self, inputs):
         return (inputs > 0) * inputs

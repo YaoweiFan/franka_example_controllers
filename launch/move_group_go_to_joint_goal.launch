@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<launch>
+    <arg name="robot_ip" default="172.16.0.3"/>
+
+   <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch) -->
+   <include file="$(find panda_moveit_config)/launch/panda_control_moveit_rviz.launch">
+      <arg name="robot_ip" value="$(arg robot_ip)"/> <!-- set your robot ip -->
+      <arg name="load_gripper" value="true"/>
+      <arg name="launch_rviz" value="true"/>
+   </include>  
+
+   <node name="move_group_python_interface_tutorial" pkg="franka_example_controllers" type="move_group_go_to_joint_goal.py" output="screen" required="true" />
+
+</launch>

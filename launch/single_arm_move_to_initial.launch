@@ -2,6 +2,7 @@
 <launch>
     <arg name="robot_ip"/>
     <arg name="arm_id"/>
+    <arg name="has_gripper"/>
     <arg name="joint_goal0"/>
     <arg name="joint_goal1"/>
     <arg name="joint_goal2"/>
@@ -14,8 +15,8 @@
       <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch) -->
       <include file="$(find panda_moveit_config)/launch/panda_control_moveit_rviz.launch">
          <arg name="robot_ip" value="$(arg robot_ip)"/> <!-- set your robot ip -->
-         <arg name="load_gripper" value="true"/>
-         <arg name="launch_rviz" value="true"/>
+         <arg name="load_gripper" value="$(arg has_gripper)"/>
+         <arg name="launch_rviz" value="True"/>
       </include>  
 
       <param name="arm_id" value="$(arg arm_id)"/>
@@ -28,7 +29,7 @@
       <param name="joint_goal5" value="$(arg joint_goal5)"/>
       <param name="joint_goal6" value="$(arg joint_goal6)"/>
 
-      <node name="move_group_python_interface_tutorial" pkg="franka_example_controllers" type="move_group_python_interface.py" output="screen" required="true" />
+      <node name="move_group_python_interface_tutorial" pkg="franka_example_controllers" type="move_group_go_to_joint_goal.py" output="screen" required="true" />
      </group>
 
 </launch>
