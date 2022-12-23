@@ -5,7 +5,7 @@ class MultinomialActionSelector():
 
     def __init__(self):
         self.epsilon = 0.01
-        self.test_greedy = False
+        self.test_greedy = True
 
     def select_action(self, agent_inputs, avail_actions):
         masked_policies = agent_inputs.clone()

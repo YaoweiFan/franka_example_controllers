@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="rosbag" type="record" name="bag_record" 
-            args="/panda_1/cartesian_admittance_controller_velocity/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/>
+    <!-- <node pkg="rosbag" type="record" name="bag_record" 
+            args="/panda_1/cartesian_admittance_controller_velocity/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/> -->
 
     <include file="$(find franka_example_controllers)/launch/single_arm_velocity.launch">
         <arg name="robot_ip" value="172.16.0.2" />

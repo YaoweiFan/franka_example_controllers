@@ -30,6 +30,9 @@
       <param name="joint_goal6" value="$(arg joint_goal6)"/>
 
       <node name="move_group_python_interface_tutorial" pkg="franka_example_controllers" type="move_group_go_to_joint_goal.py" output="screen" required="true" />
+      <!-- <node name="publish_node" pkg="franka_example_controllers" type="get_eef_pose_from_franka_states.py" output="screen">
+         <param name="link_name" value="panda_link0" />
+      </node> -->
      </group>
 
 </launch>

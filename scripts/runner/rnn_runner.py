@@ -1,42 +1,45 @@
 import os
+from os.path import dirname
 from actor.rnn_controller import Controller
 import numpy as np
 import pandas as pd
 from utils.my_vec_normalize import VecNormalize
 from prettytable import PrettyTable
 
+
 class Runner:
 
     def __init__(self):
         self.record = False
         self.steps = 0
-        self.data_path = os.path.join(os.path.dirname(__file__), "data/state_check.csv")
-        self.vn = VecNormalize.load(os.path.join(os.path.dirname(__file__), "actor/parameters/vec_normalize_dict.pkl"))
+        self.action_strs = ["stop", "front", "behind", "left", "right", "up", "down"]
+        self.data_path = os.path.join(dirname(dirname(__file__)), "data/state_check.csv")
+        self.vn = VecNormalize.load(os.path.join(dirname(dirname(__file__)), "actor/parameters/discrete/params/vec_normalize_dict.pkl"))
         self.controller = Controller()
         self.controller.init_hidden()
 
     def single_action_to_delta_pos(self, action):
         if action == 0:
             # stop
-            delta_pos = 0.03*np.array([0, 0, 0])
+            delta_pos = 0.01 * np.array([0, 0, 0])
         elif action == 1:
             # move front
-            delta_pos = 0.03*np.array([1, 0, 0])
+            delta_pos = 0.01 * np.array([1, 0, 0])
         elif action == 2:
             # move behind
-            delta_pos = 0.03*np.array([-1,0, 0])
+            delta_pos = 0.01 * np.array([-1, 0, 0])
         elif action == 3:
             # move left
-            delta_pos = 0.03*np.array([0,-1, 0])
+            delta_pos = 0.01 * np.array([0, -1, 0])
         elif action == 4:
             # move right
-            delta_pos = 0.03*np.array([0, 1, 0])
+            delta_pos = 0.01 * np.array([0, 1, 0])
         elif action == 5:
             # move up
-            delta_pos = 0.03*np.array([0, 0, 1])
+            delta_pos = 0.01 * np.array([0, 0, 1])
         else:
             # move down
-            delta_pos = 0.03*np.array([0, 0,-1])
+            delta_pos = 0.01 * np.array([0, 0,-1])
 
         return delta_pos
 
@@ -44,6 +47,17 @@ class Runner:
         delta_pos_1 = self.single_action_to_delta_pos(action[0])
         delta_pos_2 = self.single_action_to_delta_pos(action[1])
         return np.array([delta_pos_1, delta_pos_2])
+
+    def get_action(self, obs, avail_actions):
+        """
+        for policy test
+        """
+        transition = {
+            "avail_actions": avail_actions,
+            "obs": self.vn.normalize_obs(obs)
+        }
+        actions = self.controller.select_actions(transition)        
+        return actions
 
     def step(self, obs, avail_actions):
         transition = {
@@ -54,6 +68,7 @@ class Runner:
 
         action_table = PrettyTable(['Pacts', 'Qacts'])
         action_table.add_row([actions[0], actions[1]])
+        action_table.add_row([self.action_strs[actions[0]], self.action_strs[actions[1]]])
         print(action_table)
 
         if self.record:

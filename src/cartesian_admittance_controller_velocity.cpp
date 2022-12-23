@@ -259,7 +259,7 @@ void CartesianAdmittanceControllerVelocity::update(const ros::Time& /* time */,
 
 // 订阅平衡位置
 void CartesianAdmittanceControllerVelocity::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
-  std::cout << msg->pose.position.x << " " << msg->pose.position.y << " " << msg->pose.position.z << std::endl;
+  // std::cout << msg->pose.position.x << " " << msg->pose.position.y << " " << msg->pose.position.z << std::endl;
   position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
   Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
   orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;

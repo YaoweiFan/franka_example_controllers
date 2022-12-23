@@ -1,23 +1,25 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
-
 import rospy
 import tf.transformations
 import numpy as np
+from prettytable import PrettyTable
+import os
+import pandas as pd
 
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import WrenchStamped
 from franka_msgs.msg import FrankaState
-from runner.rnn_runner import Runner
-
 import actionlib
 from franka_gripper.msg import GraspAction, GraspGoal, GraspEpsilon, MoveAction, MoveGoal
 
-from prettytable import PrettyTable
+from runner.rnn_runner import Runner
+from utils.transfer import transfer_to_sim_frame, transfer_to_real_frame
 
 # import actionlib_tutorials.msg
 # actionlib_tutorials.msg.FibonacciAction
 # goal = actionlib_tutorials.msg.FibonacciGoal(order=20)
+
 
 panda1_pose_msg = PoseStamped()
 panda2_pose_msg = PoseStamped()
@@ -29,8 +31,10 @@ panda2_pose_pub = None
 equilibrium_pose_msg_set = False
 
 # 状态，包括末端位置和姿态
-panda1_pose = {'position': np.zeros(3), 'orientation': np.zeros(4)}
-panda2_pose = {'position': np.zeros(3), 'orientation': np.zeros(4)}
+panda1_pose = {'position': None, 'orientation': None}
+panda2_pose = {'position': None, 'orientation': None}
+panda1_pose_command = {'position': None, 'orientation': None}
+panda2_pose_command = {'position': None, 'orientation': None}
 
 panda1_eef_pos = np.zeros(3)
 panda1_eef_quat = np.zeros(4)
@@ -42,26 +46,25 @@ right_hole_pos = np.zeros(3)
 
 peg_pos = np.zeros(3)
 
-# [[min_x, max_x], [min_y, max_y], [min_z, max_z]]
-position_limits = [[-0.6, 0.8], [-0.6, 0.6], [0, 0.9]]
+
 
 # 设置平衡位置消息并发送
 def set_pub_msgs(link_name_1, link_name_2):
-    panda1_pose_msg.pose.position.x = max([min([panda1_pose["position"][0], position_limits[0][1]]), position_limits[0][0]])
-    panda1_pose_msg.pose.position.y = max([min([panda1_pose["position"][1], position_limits[1][1]]), position_limits[1][0]])
-    panda1_pose_msg.pose.position.z = max([min([panda1_pose["position"][2], position_limits[2][1]]), position_limits[2][0]])
-    panda1_pose_msg.pose.orientation.x = panda1_pose["orientation"][0]
-    panda1_pose_msg.pose.orientation.y = panda1_pose["orientation"][1]
-    panda1_pose_msg.pose.orientation.z = panda1_pose["orientation"][2]
-    panda1_pose_msg.pose.orientation.w = panda1_pose["orientation"][3]
+    panda1_pose_msg.pose.position.x = panda1_pose_command["position"][0]
+    panda1_pose_msg.pose.position.y = panda1_pose_command["position"][1]
+    panda1_pose_msg.pose.position.z = panda1_pose_command["position"][2]
+    panda1_pose_msg.pose.orientation.x = panda1_pose_command["orientation"][0]
+    panda1_pose_msg.pose.orientation.y = panda1_pose_command["orientation"][1]
+    panda1_pose_msg.pose.orientation.z = panda1_pose_command["orientation"][2]
+    panda1_pose_msg.pose.orientation.w = panda1_pose_command["orientation"][3]
 
-    panda2_pose_msg.pose.position.x = max([min([panda2_pose["position"][0], position_limits[0][1]]), position_limits[0][0]])
-    panda2_pose_msg.pose.position.y = max([min([panda2_pose["position"][1], position_limits[1][1]]), position_limits[1][0]])
-    panda2_pose_msg.pose.position.z = max([min([panda2_pose["position"][2], position_limits[2][1]]), position_limits[2][0]])
-    panda2_pose_msg.pose.orientation.x = panda2_pose["orientation"][0]
-    panda2_pose_msg.pose.orientation.y = panda2_pose["orientation"][1]
-    panda2_pose_msg.pose.orientation.z = panda2_pose["orientation"][2]
-    panda2_pose_msg.pose.orientation.w = panda2_pose["orientation"][3]
+    panda2_pose_msg.pose.position.x = panda2_pose_command["position"][0]
+    panda2_pose_msg.pose.position.y = panda2_pose_command["position"][1]
+    panda2_pose_msg.pose.position.z = panda2_pose_command["position"][2]
+    panda2_pose_msg.pose.orientation.x = panda2_pose_command["orientation"][0]
+    panda2_pose_msg.pose.orientation.y = panda2_pose_command["orientation"][1]
+    panda2_pose_msg.pose.orientation.z = panda2_pose_command["orientation"][2]
+    panda2_pose_msg.pose.orientation.w = panda2_pose_command["orientation"][3]
 
     panda1_pose_msg.header.frame_id = link_name_1
     panda1_pose_msg.header.stamp = rospy.Time(0)
@@ -70,8 +73,10 @@ def set_pub_msgs(link_name_1, link_name_2):
     panda2_pose_msg.header.stamp = rospy.Time(0)
     panda2_pose_pub.publish(panda2_pose_msg)
 
+
 # get panda1's obs
 def panda1_franka_callback(msg):
+    global panda1_eef_pos, panda1_eef_quat
     panda1_eef_pos[0] = msg.O_T_EE[12]
     panda1_eef_pos[1] = msg.O_T_EE[13]
     panda1_eef_pos[2] = msg.O_T_EE[14]
@@ -83,8 +88,10 @@ def panda1_franka_callback(msg):
     panda1_eef_quat[2] = quaternion[2]
     panda1_eef_quat[3] = quaternion[3]
 
+
 # get panda2's obs
 def panda2_franka_callback(msg):
+    global panda2_eef_pos, panda2_eef_quat
     panda2_eef_pos[0] = msg.O_T_EE[12]
     panda2_eef_pos[1] = msg.O_T_EE[13]
     panda2_eef_pos[2] = msg.O_T_EE[14]
@@ -109,110 +116,101 @@ if __name__ == "__main__":
     link_name_2 = rospy.get_param("~link_name_2")
 
     print("Waiting for getting initial pose ...")
-
     # Get initial pose
     while np.sum(panda1_eef_pos) == 0 or np.sum(panda2_eef_pos) == 0:
         rospy.sleep(1)
-
+    panda1_pose_command["position"] = panda1_eef_pos.copy()
+    panda1_pose_command["orientation"] = panda1_eef_quat.copy()
+    panda2_pose_command["position"] = panda2_eef_pos.copy()
+    panda2_pose_command["orientation"] = panda2_eef_quat.copy()
     print("Initial pose Got!")
-
-    panda1_pose["position"] = panda1_eef_pos.copy()
-    panda1_pose["orientation"] = panda1_eef_quat.copy()
-    panda2_pose["position"] = panda2_eef_pos.copy()
-    panda2_pose["orientation"] = panda2_eef_quat.copy()
 
     panda1_pose_pub = rospy.Publisher("panda_1_equilibrium_pose", PoseStamped, queue_size=10)
     panda2_pose_pub = rospy.Publisher("panda_2_equilibrium_pose", PoseStamped, queue_size=10)
 
     runner = Runner()
 
-    print("============ Press `Enter` to open both grippers ...")
-    input()
+    # print("============ Press `Enter` to open both grippers ...")
+    # raw_input()
 
-    # panda1 gripper open hand
-    panda1_move_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/move", MoveAction)
-    panda1_move_client.wait_for_server()
-    print("panda1 start opening ...")
-    panda1_move_goal = MoveGoal(width=0.05, speed=0.03)
-    panda1_move_client.send_goal(panda1_move_goal)
-    panda1_move_client.wait_for_result()
-    print("panda1's hand opened!")
+    # # panda1 gripper open hand
+    # panda1_move_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/move", MoveAction)
+    # panda1_move_client.wait_for_server()
+    # print("panda1 start opening ...")
+    # panda1_move_goal = MoveGoal(width=0.05, speed=0.03)
+    # panda1_move_client.send_goal(panda1_move_goal)
+    # panda1_move_client.wait_for_result()
+    # print("panda1's hand opened!")
 
-    # panda2 gripper open hand
-    panda2_move_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/move", MoveAction)
-    panda2_move_client.wait_for_server()
-    print("panda2 start opening ...")
-    panda2_move_goal = MoveGoal(width=0.05, speed=0.03)
-    panda2_move_client.send_goal(panda2_move_goal)
-    panda2_move_client.wait_for_result()
-    print("panda2's hand opened!")
+    # # panda2 gripper open hand
+    # panda2_move_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/move", MoveAction)
+    # panda2_move_client.wait_for_server()
+    # print("panda2 start opening ...")
+    # panda2_move_goal = MoveGoal(width=0.05, speed=0.03)
+    # panda2_move_client.send_goal(panda2_move_goal)
+    # panda2_move_client.wait_for_result()
+    # print("panda2's hand opened!")
 
-    print("============ Press `Enter` to close gripper1 ...")
-    input()
+    # print("============ Press `Enter` to close gripper1 ...")
+    # raw_input()
 
-    # panda1 gripper grasp obj
-    panda1_grasp_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/grasp", GraspAction)
-    panda1_grasp_client.wait_for_server()
-    print("panda1 start grasping ...")
-    epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
-    panda1_grasp_goal = GraspGoal(width=0.025, epsilon=epsilon, speed=0.01, force=1)
-    panda1_grasp_client.send_goal(panda1_grasp_goal)
-    panda1_grasp_client.wait_for_result()
-    print("panda1 grasped object!")
+    # # panda1 gripper grasp obj
+    # panda1_grasp_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/grasp", GraspAction)
+    # panda1_grasp_client.wait_for_server()
+    # print("panda1 start grasping ...")
+    # epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
+    # panda1_grasp_goal = GraspGoal(width=0.025, epsilon=epsilon, speed=0.01, force=1)
+    # panda1_grasp_client.send_goal(panda1_grasp_goal)
+    # panda1_grasp_client.wait_for_result()
+    # print("panda1 grasped object!")
 
-    print("============ Press `Enter` to close gripper2 ...")
-    input()
+    # print("============ Press `Enter` to close gripper2 ...")
+    # raw_input()
 
-    # panda2 gripper grasp obj
-    panda2_grasp_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/grasp", GraspAction)
-    panda2_grasp_client.wait_for_server()
-    print("panda2 start grasping ...")
-    epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
-    panda2_grasp_goal = GraspGoal(width=0.025, epsilon=epsilon, speed=0.01, force=1)
-    panda2_grasp_client.send_goal(panda2_grasp_goal)
-    panda2_grasp_client.wait_for_result()
-    print("panda2 grasped object!")
+    # # panda2 gripper grasp obj
+    # panda2_grasp_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/grasp", GraspAction)
+    # panda2_grasp_client.wait_for_server()
+    # print("panda2 start grasping ...")
+    # epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
+    # panda2_grasp_goal = GraspGoal(width=0.025, epsilon=epsilon, speed=0.01, force=1)
+    # panda2_grasp_client.send_goal(panda2_grasp_goal)
+    # panda2_grasp_client.wait_for_result()
+    # print("panda2 grasped object!")
+
+    discrete_path = '/home/fyw/Documents/discrete/DualArmMimic/results/models/discrete/offpg_dualarm__2022-11-01_22-16-42'
+    dataframe = pd.read_csv(os.path.join(discrete_path, "fix_deterministic_state3/0.csv"))
+    steps = 0
 
     print("============ Press `Enter` to start policy ...")
-    input()
+    raw_input()
 
-    panda1_obs = np.zeros(19)
-    panda2_obs = np.zeros(19)
+    panda1_obs = np.zeros(13)
+    panda2_obs = np.zeros(13)
     while not rospy.is_shutdown():
-        # [-0.2, -0.25, 1.05]  = [0.35926132 0.22942945 0.03901864] + []
-        # print(panda1_eef_pos)
-        # print(panda2_eef_pos)
-        panda1_obs[0:3] = panda1_eef_pos + np.array([-0.55926132, -0.47942945, 1.01098136])
-        panda1_obs[3:7] = panda1_eef_quat
-        panda1_obs[7:13] = np.array([0,0,0,0,0,0])
-        # peg 的位置在 eef 之下 0.05m
-        panda1_obs[13:16] = panda1_obs[0:3] + np.array([0, 0, -0.05])
-        # left hole 的位置是固定的
-        panda1_obs[16:19] = panda1_obs[13:16] - np.array([0, -0.25, 1.02])
-        # print("------------------------------------------------------------")
-        # print("panda1_obs:")
-        # print("panda1_eef_pos:", panda1_obs[0:3])
-        # print("panda1_eef_quat:", panda1_obs[3:7])
-        # print("panda1_ft:", panda1_obs[7:13])
-        # print("panda1_peg_pos:", panda1_obs[13:16])
-        # print("panda1_left_hole_pos:", panda1_obs[16:19])
+        # 记录当前机械臂末端位置姿态（sim 坐标系下）  
+        panda1_pose["position"] = transfer_to_sim_frame(panda1_eef_pos.copy(), 'panda_1')
+        panda1_pose["orientation"] = panda1_eef_quat.copy()
+        panda2_pose["position"] = transfer_to_sim_frame(panda2_eef_pos.copy(), 'panda_2')
+        panda2_pose["orientation"] = panda2_eef_quat.copy()
 
-        # [-0.2, 0.25, 1.05]  = [ 0.35748203 -0.23044253  0.03546662] + []
-        panda2_obs[0:3] = panda2_eef_pos + np.array([-0.55748203, 0.48044253, 1.01453338])
-        panda2_obs[3:7] = panda2_eef_quat
-        panda2_obs[7:13] = np.array([0,0,0,0,0,0])
-        # peg 的位置在 eef 之下 0.05m
-        panda2_obs[13:16] = panda2_obs[0:3] + np.array([0, 0, -0.05])
-        # right hole 的位置是固定的
-        panda2_obs[16:19] = panda2_obs[13:16] - np.array([0, 0.25, 1.02])
-        # print("panda2_obs:")
-        # print("panda2_eef_pos:", panda2_obs[0:3])
-        # print("panda2_eef_quat:", panda2_obs[3:7])
-        # print("panda2_ft:", panda2_obs[7:13])
-        # print("panda2_peg_pos:", panda2_obs[13:16])
-        # print("panda2_right_hole_pos:", panda2_obs[16:19])
-        # print("------------------------------------------------------------")
 
+        panda1_obs[0:3] = panda1_pose["position"]
+        panda1_obs[3:7] = panda1_pose_command["orientation"]
+        # peg 的位置在 eef 之下 0.05m
+        left_peg_pos = panda1_pose["position"] + np.array([0, 0, -0.05])
+        panda1_obs[7:10] = left_peg_pos
+        panda1_obs[10:13] = left_peg_pos - np.array([0, -0.25, 1.02])
+
+        panda2_obs[0:3] = panda2_pose["position"]
+        panda2_obs[3:7] = panda2_pose_command["orientation"]
+        # peg 的位置在 eef 之下 0.05m
+        right_peg_pos = panda2_pose["position"] + np.array([0, 0, -0.05])
+        panda2_obs[7:10] = right_peg_pos
+        panda2_obs[10:13] = right_peg_pos - np.array([0, 0.25, 1.02])
+
+
+        # 打印 obs  
+        print("=========== Step " + str(steps) + " ===========")
         pos_table = PrettyTable(['Px','Py','Pz','Qx','Qy','Qz'])
         pos_table.add_row([panda1_obs[0], panda1_obs[1], panda1_obs[2], panda2_obs[0], panda2_obs[1], panda2_obs[2]])
         print(pos_table)
@@ -220,31 +218,45 @@ if __name__ == "__main__":
         quat_table.add_row([panda1_obs[3], panda1_obs[4], panda1_obs[5], panda1_obs[6], panda2_obs[3], panda2_obs[4], panda2_obs[5], panda2_obs[6]])
         print(quat_table)
         peg_table = PrettyTable(['Ppegx','Ppegy','Ppegz','Qpegx','Qpegy','Qpegz'])
-        peg_table.add_row([panda1_obs[13], panda1_obs[14], panda1_obs[15], panda2_obs[13], panda2_obs[14], panda2_obs[15]])
+        peg_table.add_row([panda1_obs[7], panda1_obs[8], panda1_obs[9], panda2_obs[7], panda2_obs[8], panda2_obs[9]])
         print(peg_table)
         pth_table = PrettyTable(['Ppthx','Ppthy','Ppthz','Qpthx','Qpthy','Qpthz'])
-        pth_table.add_row([panda1_obs[16], panda1_obs[17], panda1_obs[18], panda2_obs[16], panda2_obs[17], panda2_obs[18]])
+        pth_table.add_row([panda1_obs[10], panda1_obs[11], panda1_obs[12], panda2_obs[10], panda2_obs[11], panda2_obs[12]])
         print(pth_table)
 
+
+        # obs -> action
         obs = np.array([panda1_obs, panda2_obs])
         avail_actions = np.array([[1,1,1,1,1,1,1], [1,1,1,1,1,1,1]])
-        # obs -> action
         delta_pos = runner.step(obs, avail_actions)
-        panda1_pose["position"] += delta_pos[0]
-        panda2_pose["position"] += delta_pos[1]
 
+        panda1_pose_command["position"] = transfer_to_sim_frame(panda1_pose_command["position"], 'panda_1')
+        panda2_pose_command["position"] = transfer_to_sim_frame(panda2_pose_command["position"], 'panda_2')
+        # panda1_pose_command["position"] += delta_pos[0]
+        # panda2_pose_command["position"] += delta_pos[1]
+        panda1_pose_command["position"][0] = dataframe["left_x"][steps]
+        panda1_pose_command["position"][1] = dataframe["left_y"][steps]
+        panda1_pose_command["position"][2] = dataframe["left_z"][steps]
+        panda2_pose_command["position"][0] = dataframe["right_x"][steps]
+        panda2_pose_command["position"][1] = dataframe["right_y"][steps]
+        panda2_pose_command["position"][2] = dataframe["right_z"][steps]
+        panda1_pose_command["position"] = transfer_to_real_frame(panda1_pose_command["position"], 'panda_1')
+        panda2_pose_command["position"] = transfer_to_real_frame(panda2_pose_command["position"], 'panda_2')
+
+
+        # 打印 action
         pub_table = PrettyTable(['Ppubx','Ppuby','Ppubz','Qpubx','Qpuby','Qpubz'])
-        pub_table.add_row([panda1_pose["position"][0], panda1_pose["position"][1], panda1_pose["position"][2], panda2_pose["position"][0], panda2_pose["position"][1], panda2_pose["position"][2]])
+        pub_table.add_row([panda1_pose_command["position"][0], panda1_pose_command["position"][1], panda1_pose_command["position"][2], 
+                            panda1_pose_command["position"][0], panda1_pose_command["position"][1], panda1_pose_command["position"][2]])
         print(pub_table)
 
-        # panda1_pose["position"] -= np.array([0, 0, 0.002])
-        # panda2_pose["position"] -= np.array([0, 0, 0.002])
 
+        # 执行
         print("============ Press `Enter` to execute a step ...")
-        input()
-
-        # update new equilibrium pose, delta_pos: 2*3
+        raw_input()
         set_pub_msgs(link_name_1, link_name_2)
-
-        # rospy.sleep(1)
-
+        steps += 1
+        # 手动确认执行完毕
+        print("============ Press `Enter` to ensure last step was finished totally ...")
+        raw_input()
+        

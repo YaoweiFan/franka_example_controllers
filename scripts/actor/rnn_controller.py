@@ -48,7 +48,7 @@ class Controller:
         self.hidden_states = np.zeros((2,64))
 
     def _build_inputs(self, transition):
-        agent_ids = np.array([[1,0], [0,1]])
+        agent_ids = np.array([[1, 0], [0, 1]])
         inputs = np.c_[transition["obs"], self.last_action, agent_ids]
         return inputs
 
