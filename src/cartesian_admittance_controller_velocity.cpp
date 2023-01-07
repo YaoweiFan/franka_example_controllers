@@ -89,7 +89,7 @@ bool CartesianAdmittanceControllerVelocity::init(hardware_interface::RobotHW* ro
   cartesian_damping_.topLeftCorner(3,3) = 2.0 * sqrt(1000) * Eigen::MatrixXd::Identity(3,3);
   cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(10) * Eigen::MatrixXd::Identity(3,3);
   // cartesian_stiffness_.setZero();
-  cartesian_stiffness_.topLeftCorner(3,3) = 150 * Eigen::MatrixXd::Identity(3,3);
+  cartesian_stiffness_.topLeftCorner(3,3) = 300 * Eigen::MatrixXd::Identity(3,3);
   cartesian_stiffness_.bottomRightCorner(3,3) = 10 * Eigen::MatrixXd::Identity(3,3);
 
   twist_.setZero();
@@ -98,8 +98,8 @@ bool CartesianAdmittanceControllerVelocity::init(hardware_interface::RobotHW* ro
   ft_filtered_.setZero(); ft_filtered_[2] = fz_bias;
   ft_d_.setZero();
 
-  force_gain_.topLeftCorner(3,3) = 1 * Eigen::MatrixXd::Identity(3,3);
-  force_gain_.bottomRightCorner(3,3) = 1 * Eigen::MatrixXd::Identity(3,3);
+  force_gain_.topLeftCorner(3,3) = 0.1 * Eigen::MatrixXd::Identity(3,3);
+  force_gain_.bottomRightCorner(3,3) = 0.1 * Eigen::MatrixXd::Identity(3,3);
 
   // 计算末端外力相关矩阵系数初始化
   ee2ft_ori << 0.7071, -0.7071, 0,

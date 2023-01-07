@@ -151,35 +151,37 @@ if __name__ == "__main__":
     # panda2_move_client.wait_for_result()
     # print("panda2's hand opened!")
 
-    # print("============ Press `Enter` to close gripper1 ...")
-    # raw_input()
+    print("============ Press `Enter` to close gripper1 ...")
+    raw_input()
 
-    # # panda1 gripper grasp obj
-    # panda1_grasp_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/grasp", GraspAction)
-    # panda1_grasp_client.wait_for_server()
-    # print("panda1 start grasping ...")
-    # epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
-    # panda1_grasp_goal = GraspGoal(width=0.025, epsilon=epsilon, speed=0.01, force=1)
-    # panda1_grasp_client.send_goal(panda1_grasp_goal)
-    # panda1_grasp_client.wait_for_result()
-    # print("panda1 grasped object!")
+    # panda1 gripper grasp obj
+    panda1_grasp_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/grasp", GraspAction)
+    panda1_grasp_client.wait_for_server()
+    print("panda1 start grasping ...")
+    epsilon = GraspEpsilon(inner=0.001 ,outer=0.001)
+    panda1_grasp_goal = GraspGoal(width=-0.02, epsilon=epsilon, speed=0.01, force=5)
+    # panda1_grasp_goal = MoveGoal(width=0.015, speed=0.01)
+    panda1_grasp_client.send_goal(panda1_grasp_goal)
+    panda1_grasp_client.wait_for_result()
+    print("panda1 grasped object!")
 
-    # print("============ Press `Enter` to close gripper2 ...")
-    # raw_input()
+    print("============ Press `Enter` to close gripper2 ...")
+    raw_input()
 
-    # # panda2 gripper grasp obj
-    # panda2_grasp_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/grasp", GraspAction)
-    # panda2_grasp_client.wait_for_server()
-    # print("panda2 start grasping ...")
-    # epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
-    # panda2_grasp_goal = GraspGoal(width=0.025, epsilon=epsilon, speed=0.01, force=1)
-    # panda2_grasp_client.send_goal(panda2_grasp_goal)
-    # panda2_grasp_client.wait_for_result()
-    # print("panda2 grasped object!")
+    # panda2 gripper grasp obj
+    panda2_grasp_client = actionlib.SimpleActionClient("/panda_2/franka_gripper/grasp", GraspAction)
+    panda2_grasp_client.wait_for_server()
+    print("panda2 start grasping ...")
+    epsilon = GraspEpsilon(inner=0.001 ,outer=0.001)
+    panda2_grasp_goal = GraspGoal(width=-0.02, epsilon=epsilon, speed=0.01, force=5)
+    # panda2_grasp_goal = MoveGoal(width=0.015, speed=0.01)
+    panda2_grasp_client.send_goal(panda2_grasp_goal)
+    panda2_grasp_client.wait_for_result()
+    print("panda2 grasped object!")
 
     discrete_path = '/home/fyw/Documents/discrete/DualArmMimic/results/models/discrete/offpg_dualarm__2022-11-01_22-16-42'
     dataframe = pd.read_csv(os.path.join(discrete_path, "fix_deterministic_state3/0.csv"))
-    steps = 0
+    steps = 1
 
     print("============ Press `Enter` to start policy ...")
     raw_input()

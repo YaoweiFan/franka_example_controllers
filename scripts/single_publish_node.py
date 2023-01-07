@@ -79,34 +79,9 @@ if __name__ == "__main__":
 
     panda1_pose_pub = rospy.Publisher("panda_1_equilibrium_pose", PoseStamped, queue_size=10)
 
-    # panda1 gripper open hand
-    panda1_move_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/move", MoveAction)
-    panda1_move_client.wait_for_server()
-    print("panda1 start opening ...")
-    panda1_move_goal = MoveGoal(width=0.05, speed=0.03)
-    panda1_move_client.send_goal(panda1_move_goal)
-    panda1_move_client.wait_for_result()
-    print("panda1's hand opened!")
-
-    # panda1 gripper grasp obj
-    panda1_grasp_client = actionlib.SimpleActionClient("/panda_1/franka_gripper/grasp", GraspAction)
-    panda1_grasp_client.wait_for_server()
-    print("panda1 start grasping ...")
-    epsilon = GraspEpsilon(inner=0.005 ,outer=0.005)
-    panda1_grasp_goal = GraspGoal(width=0, epsilon=epsilon, speed=0.01, force=5)
-    panda1_grasp_client.send_goal(panda1_grasp_goal)
-    panda1_grasp_client.wait_for_result()
-    print("panda1 grasped object!")
-
     panda1_obs = np.zeros(19)
     while not rospy.is_shutdown():
-        panda1_obs[0:3] = panda1_eef_pos + np.array([-0.560, -0.250, 0.92])
-        panda1_obs[3:7] = panda1_eef_quat
-        # panda1_obs[7:13] = panda1_ft
-        panda1_obs[7:13] = np.array([0,0,0,0,0,0])
-        # panda1_obs[13:16] = peg_pos + np.array([0, -0.25, -0.0275])
-        # panda1_obs[16:19] = panda1_obs[13:16] - (left_hole_pos + np.array([0,0,0.025]))
-        # panda1_obs[16:19] = left_hole_pos
+
         print("-------------------------------------------------------")
         print("panda1_obs:")
         print(panda1_obs[0:3])

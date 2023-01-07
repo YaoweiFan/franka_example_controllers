@@ -153,7 +153,7 @@ void CartesianAdmittanceControllerPose::update(const ros::Time& /* time */,
   error.tail(3) << -transform.linear() * error.tail(3);
 
   // 将力/力矩传感器的度数转换到 base 坐标系下
-  ft_filtered_ = 0.9 * ft_filtered_ + 0.1 * ft_;
+  ft_filtered_ = 0.99 * ft_filtered_ + 0.01 * ft_;
   Vector6d ef = computeExternalFt(transform);
 
   // ft_base.head(3) << transform.linear() * ft_.head(3) ;
@@ -200,25 +200,13 @@ void CartesianAdmittanceControllerPose::update(const ros::Time& /* time */,
 
   // 更新姿态
   Eigen::Vector3d w(twist_[3], twist_[4], twist_[5]); // 旋转轴
-  // if(w.norm() > 0.003) {
-    // std::cout << "angle:" << w.norm()*period.toSec() << std::endl;
-    // std::cout << "axis:" << w.normalized()[0] << " " << w.normalized()[1] << " " << w.normalized()[2] << std::endl;
-  // std::cout << period.toSec() << std::endl;
   Eigen::AngleAxisd axis_angle(w.norm()*period.toSec(), w.normalized()); // 旋转（轴角表示）
   Eigen::Matrix3d rotation_matrix = axis_angle.toRotationMatrix(); //旋转（旋转矩阵表示）
   Eigen::Matrix3d new_orm = rotation_matrix * transform.linear();
-  std::cout << "*********************" << std::endl;
-  std::cout << transform.linear() << std::endl;
-  std::cout << "*********************" << std::endl;
-  // Eigen::Matrix3d new_orm = transform.linear();
+
   pose_[0] = new_orm(0,0); pose_[1] = new_orm(1,0); pose_[2] = new_orm(2,0);
   pose_[4] = new_orm(0,1); pose_[5] = new_orm(1,1); pose_[6] = new_orm(2,1);
   pose_[8] = new_orm(0,2); pose_[9] = new_orm(1,2); pose_[10] = new_orm(2,2);
-    // std::cout << pose_[0] << " " << pose_[4] << " " << pose_[8] << " " << pose_[12] << std::endl
-    //           << pose_[1] << " " << pose_[5] << " " << pose_[9] << " " << pose_[13] << std::endl
-    //           << pose_[2] << " " << pose_[6] << " " << pose_[10] << " " << pose_[14] << std::endl
-    //           << pose_[3] << " " << pose_[7] << " " << pose_[11] << " " << pose_[15] << std::endl;
-  // }
 
   cartesian_pose_handle_->setCommand(pose_);
 
@@ -256,11 +244,6 @@ void CartesianAdmittanceControllerPose::update(const ros::Time& /* time */,
   info_msg.betaz = acc_[5];
 
   pub_.publish(info_msg);
-
-  // update parameters changed online either through dynamic reconfigure or through the interactive
-  // target by filtering
-  // cartesian_damping_ = filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
-  // cartesian_stiffness_ = filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
 }
 
 // 订阅平衡位置
@@ -279,7 +262,7 @@ Vector6d CartesianAdmittanceControllerPose::computeExternalFt(const Eigen::Affin
   Vector6d hand_gravity_handcm;
   Eigen::Matrix<double, 3, 3> base2handcm_ori = transform.linear();
   hand_gravity_handcm.head(3) = base2handcm_ori.inverse() * Eigen::Vector3d{0, 0, 0}; // 力矩
-  hand_gravity_handcm.tail(3) = base2handcm_ori.inverse() * Eigen::Vector3d{0, 0, -7.85943}; // 力
+  hand_gravity_handcm.tail(3) = base2handcm_ori.inverse() * Eigen::Vector3d{0, 0, -7.8}; // 力
   Vector6d hand_gravity_contribution = Adhandcm2ft.transpose() * hand_gravity_handcm;
 
   // std::cout << "hand_gravity_contribution: ";
@@ -307,7 +290,7 @@ Vector6d CartesianAdmittanceControllerPose::computeExternalFt(const Eigen::Affin
 void CartesianAdmittanceControllerPose::ftCallback(const geometry_msgs::WrenchStamped& msg) {
   ft_[0] = msg.wrench.force.x;
   ft_[1] = msg.wrench.force.y;
-  ft_[2] = msg.wrench.force.z;
+  ft_[2] = msg.wrench.force.z + 7.8;
   ft_[3] = msg.wrench.torque.x;
   ft_[4] = msg.wrench.torque.y;
   ft_[5] = msg.wrench.torque.z;
