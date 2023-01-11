@@ -64,9 +64,14 @@
           A controller that renders a spring damper system in cartesian space based on pose controller. 
       </description>
   </class>
-  <class name="franka_example_controllers/CartesianAdmittanceControllerTorque" type="franka_example_controllers::CartesianAdmittanceControllerTorque" base_class_type="controller_interface::ControllerBase">
+  <class name="franka_example_controllers/OperationalSpaceController" type="franka_example_controllers::OperationalSpaceController" base_class_type="controller_interface::ControllerBase">
       <description>
-          A controller that renders a spring damper system in cartesian space based on torque controller. 
+          A controller that control the cartesian position of the end-effector by torque. 
+      </description>
+  </class>
+  <class name="franka_example_controllers/ARCmodel_reaching" type="franka_example_controllers::ARCmodel_reaching" base_class_type="controller_interface::ControllerBase">
+      <description>
+          A controller that renders a spring damper system in cartesian space based on torque controller -- impedance controller. 
       </description>
   </class>
 </library>

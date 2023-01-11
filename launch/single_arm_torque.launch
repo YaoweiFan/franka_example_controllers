@@ -5,10 +5,10 @@
     <arg name="load_gripper" default="true" />
 
     <node pkg="rosbag" type="record" name="bag_record" 
-            args="/panda_1/cartesian_admittance_controller_torque/debug_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/debug/debug.bag"/>
+            args="/panda_1/operational_space_controller/debug_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/>
 
     <group ns="$(arg arm_id)">
-        <group ns="cartesian_admittance_controller_torque">
+        <group ns="operational_space_controller">
             <include file="$(find ati_sensor)/launch/ft_sensor.launch" >
                 <arg name="ip" value="172.16.0.4"/>
             </include>
@@ -19,13 +19,13 @@
             <arg name="load_gripper" value="$(arg load_gripper)" />
         </include>
         <rosparam command="load" file="$(find franka_example_controllers)/config/franka_example_controllers.yaml" />
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_admittance_controller_torque"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="operational_space_controller"/>
     
     </group>
 
     <node name="single_publish_node" pkg="franka_example_controllers" type="single_publish_node.py" output="screen">
         <param name="link_name_1" value="panda_link0" />
-        <!-- <remap from="panda_1_equilibrium_pose" to="/panda_1/cartesian_admittance_controller/equilibrium_pose" /> -->
+        <remap from="panda_1_equilibrium_pose" to="/panda_1/operational_space_controller/equilibrium_pose" />
     </node>
 
     <!-- <node pkg="rviz" type="rviz" output="screen" name="rviz" /> -->

@@ -198,15 +198,15 @@ class MoveGroupPythonIntefaceTutorial(object):
 
   def print_joint_state(self):
     group = self.group
-    joint_goal = group.get_current_joint_values()
+    joint_values = group.get_current_joint_values()
 
-    print(joint_goal[0])
-    print(joint_goal[1])
-    print(joint_goal[2])
-    print(joint_goal[3])
-    print(joint_goal[4])
-    print(joint_goal[5])
-    print(joint_goal[6])
+    print(joint_values[0])
+    print(joint_values[1])
+    print(joint_values[2])
+    print(joint_values[3])
+    print(joint_values[4])
+    print(joint_values[5])
+    print(joint_values[6])
 
 
 if __name__ == '__main__':

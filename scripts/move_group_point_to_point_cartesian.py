@@ -297,7 +297,7 @@ if __name__ == '__main__':
   try:
     tutorial = MoveGroupPythonIntefaceTutorial()
 
-    print("============ Press `Enter` to display current cartesian position ...")
+    print("============ Press `Enter` to show current cartesian position ...")
     raw_input()
     curr_pose = tutorial.print_curr_pose()
 
@@ -308,9 +308,9 @@ if __name__ == '__main__':
     des_pose[1] = 0.924
     des_pose[2] = 0.383
     des_pose[3] = 0.0
-    des_pose[4] = 0.366
-    des_pose[5] = -0.252
-    des_pose[6] = 0.209
+    des_pose[4] = 0.37684
+    des_pose[5] = 0.2408796
+    des_pose[6] = 0.158
     cartesian_plan, fraction = tutorial.plan_cartesian_path(des_pose)
 
     print("============ Press `Enter` to display a saved trajectory (this will replay the Cartesian path)  ...")

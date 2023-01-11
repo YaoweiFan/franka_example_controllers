@@ -123,6 +123,8 @@ if __name__ == "__main__":
     panda1_pose_command["orientation"] = panda1_eef_quat.copy()
     panda2_pose_command["position"] = panda2_eef_pos.copy()
     panda2_pose_command["orientation"] = panda2_eef_quat.copy()
+    print(panda1_pose_command["position"])
+    print(panda2_pose_command["position"])
     print("Initial pose Got!")
 
     panda1_pose_pub = rospy.Publisher("panda_1_equilibrium_pose", PoseStamped, queue_size=10)
@@ -179,8 +181,16 @@ if __name__ == "__main__":
     panda2_grasp_client.wait_for_result()
     print("panda2 grasped object!")
 
-    discrete_path = '/home/fyw/Documents/discrete/DualArmMimic/results/models/discrete/offpg_dualarm__2022-11-01_22-16-42'
-    dataframe = pd.read_csv(os.path.join(discrete_path, "fix_deterministic_state3/0.csv"))
+    # # hard assemble 
+    # discrete_path = '/home/fyw/Documents/discrete/DualArmMimic/results/models/discrete/offpg_dualarm__2022-11-01_22-16-42'
+    # dataframe = pd.read_csv(os.path.join(discrete_path, "fix_deterministic_state3/0.csv"))
+    # scene = 'hard'
+
+    # soft assemble 
+    discrete_path = '/home/fyw/Documents/discrete/DualArmMimic/results/models/dualarmrod/change_environment_mimic_200/offpg_dualarmrod__2022-12-30_23-31-08'
+    dataframe = pd.read_csv(os.path.join(discrete_path, "fix_deterministic_state_best/0.csv"))
+    scene = 'soft'
+
     steps = 1
 
     print("============ Press `Enter` to start policy ...")
@@ -190,12 +200,12 @@ if __name__ == "__main__":
     panda2_obs = np.zeros(13)
     while not rospy.is_shutdown():
         # 记录当前机械臂末端位置姿态（sim 坐标系下）  
-        panda1_pose["position"] = transfer_to_sim_frame(panda1_eef_pos.copy(), 'panda_1')
+        panda1_pose["position"] = transfer_to_sim_frame(panda1_eef_pos.copy(), 'panda_1', scene)
         panda1_pose["orientation"] = panda1_eef_quat.copy()
-        panda2_pose["position"] = transfer_to_sim_frame(panda2_eef_pos.copy(), 'panda_2')
+        panda2_pose["position"] = transfer_to_sim_frame(panda2_eef_pos.copy(), 'panda_2', scene)
         panda2_pose["orientation"] = panda2_eef_quat.copy()
 
-
+        # 装填 obs
         panda1_obs[0:3] = panda1_pose["position"]
         panda1_obs[3:7] = panda1_pose_command["orientation"]
         # peg 的位置在 eef 之下 0.05m
@@ -232,18 +242,23 @@ if __name__ == "__main__":
         avail_actions = np.array([[1,1,1,1,1,1,1], [1,1,1,1,1,1,1]])
         delta_pos = runner.step(obs, avail_actions)
 
-        panda1_pose_command["position"] = transfer_to_sim_frame(panda1_pose_command["position"], 'panda_1')
-        panda2_pose_command["position"] = transfer_to_sim_frame(panda2_pose_command["position"], 'panda_2')
+        # command 是在 real 场景下的，需要转换到 sim 场景下
+        panda1_pose_command["position"] = transfer_to_sim_frame(panda1_pose_command["position"], 'panda_1', scene)
+        panda2_pose_command["position"] = transfer_to_sim_frame(panda2_pose_command["position"], 'panda_2', scene)
         # panda1_pose_command["position"] += delta_pos[0]
         # panda2_pose_command["position"] += delta_pos[1]
-        panda1_pose_command["position"][0] = dataframe["left_x"][steps]
-        panda1_pose_command["position"][1] = dataframe["left_y"][steps]
-        panda1_pose_command["position"][2] = dataframe["left_z"][steps]
-        panda2_pose_command["position"][0] = dataframe["right_x"][steps]
-        panda2_pose_command["position"][1] = dataframe["right_y"][steps]
-        panda2_pose_command["position"][2] = dataframe["right_z"][steps]
-        panda1_pose_command["position"] = transfer_to_real_frame(panda1_pose_command["position"], 'panda_1')
-        panda2_pose_command["position"] = transfer_to_real_frame(panda2_pose_command["position"], 'panda_2')
+
+        # 直接表演轨迹
+        panda1_pose_command["position"][0] = dataframe["left_x"][steps] - 0.008
+        # panda1_pose_command["position"][1] = dataframe["left_y"][steps]
+        panda1_pose_command["position"][2] = dataframe["left_z"][steps] + 0.008
+        panda2_pose_command["position"][0] = dataframe["right_x"][steps] - 0.003
+        # panda2_pose_command["position"][1] = dataframe["right_y"][steps]
+        panda2_pose_command["position"][2] = dataframe["right_z"][steps] + 0.008
+
+        # 转换回 real 场景下的真实命令  
+        panda1_pose_command["position"] = transfer_to_real_frame(panda1_pose_command["position"], 'panda_1', scene)
+        panda2_pose_command["position"] = transfer_to_real_frame(panda2_pose_command["position"], 'panda_2', scene)
 
 
         # 打印 action

@@ -221,12 +221,12 @@ void CartesianAdmittanceControllerVelocity::update(const ros::Time& /* time */,
   info_msg.euler_y_d = euler_angle_d[1];
   info_msg.euler_x_d = euler_angle_d[2];
   // 位置误差
-  info_msg.error_pos_x = error[0];
-  info_msg.error_pos_y = error[1];
-  info_msg.error_pos_z = error[2];
-  info_msg.error_ori_x = error[3];
-  info_msg.error_ori_y = error[4];
-  info_msg.error_ori_z = error[5];
+  // info_msg.error_pos_x = error[0];
+  // info_msg.error_pos_y = error[1];
+  // info_msg.error_pos_z = error[2];
+  // info_msg.error_ori_x = error[3];
+  // info_msg.error_ori_y = error[4];
+  // info_msg.error_ori_z = error[5];
   // 外力
   info_msg.ef_fx = ef[0];
   info_msg.ef_fy = ef[1];

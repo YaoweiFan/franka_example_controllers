@@ -74,13 +74,13 @@ bool CartesianAdmittanceControllerPose::init(hardware_interface::RobotHW* robot_
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
 
   cartesian_inertia_.topLeftCorner(3,3) = Eigen::MatrixXd::Identity(3,3);
-  cartesian_inertia_.bottomRightCorner(3,3) = Eigen::MatrixXd::Identity(3,3);
+  cartesian_inertia_.bottomRightCorner(3,3) = 0.01 * Eigen::MatrixXd::Identity(3,3);
   // cartesian_damping_.setZero();
   cartesian_damping_.topLeftCorner(3,3) = 2.0 * sqrt(150) * Eigen::MatrixXd::Identity(3,3);
-  cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(150) * Eigen::MatrixXd::Identity(3,3);
+  cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(0.01) * Eigen::MatrixXd::Identity(3,3);
   // cartesian_stiffness_.setZero();
   cartesian_stiffness_.topLeftCorner(3,3) = 150 * Eigen::MatrixXd::Identity(3,3);
-  cartesian_stiffness_.bottomRightCorner(3,3) = 150 * Eigen::MatrixXd::Identity(3,3);
+  cartesian_stiffness_.bottomRightCorner(3,3) = 1 * Eigen::MatrixXd::Identity(3,3);
 
   twist_.setZero();
 
@@ -89,7 +89,7 @@ bool CartesianAdmittanceControllerPose::init(hardware_interface::RobotHW* robot_
   ft_d_.setZero();
 
   force_gain_.topLeftCorner(3,3) = 1 * Eigen::MatrixXd::Identity(3,3);
-  force_gain_.bottomRightCorner(3,3) = 1 * Eigen::MatrixXd::Identity(3,3);
+  force_gain_.bottomRightCorner(3,3) = 0.1 * Eigen::MatrixXd::Identity(3,3);
 
   // 计算末端外力相关矩阵系数初始化
   ee2ft_ori << 0.7071, -0.7071, 0,
@@ -243,7 +243,7 @@ void CartesianAdmittanceControllerPose::update(const ros::Time& /* time */,
   info_msg.betay = acc_[4];
   info_msg.betaz = acc_[5];
 
-  pub_.publish(info_msg);
+  // pub_.publish(info_msg);
 }
 
 // 订阅平衡位置

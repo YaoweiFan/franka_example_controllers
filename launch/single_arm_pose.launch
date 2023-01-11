@@ -4,8 +4,8 @@
     <arg name="arm_id" default="panda_1"/>
     <arg name="load_gripper" default="true" />
 
-    <node pkg="rosbag" type="record" name="bag_record" 
-            args="/panda_1/cartesian_admittance_controller_pose/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/>
+    <!-- <node pkg="rosbag" type="record" name="bag_record" 
+            args="/panda_1/cartesian_admittance_controller_pose/info_msg -o /home/fyw/Documents/projects/panda_ros/franka_panda_control_ws/data/info/info.bag"/> -->
 
     <group ns="$(arg arm_id)">
         <group ns="cartesian_admittance_controller_pose">

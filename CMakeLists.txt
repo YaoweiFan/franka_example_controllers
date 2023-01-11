@@ -30,6 +30,7 @@ add_message_files(FILES
   JointTorqueComparison.msg
   info.msg
   debug.msg
+  armrc_out.msg
 )
 
 generate_messages()
@@ -75,8 +76,9 @@ add_library(franka_example_controllers
   src/dual_arm_cartesian_impedance_example_controller.cpp
   src/teleop_joint_pd_example_controller.cpp
   src/cartesian_admittance_controller_pose.cpp
-  src/cartesian_admittance_controller_torque.cpp
+  src/operational_space_controller.cpp
   src/cartesian_admittance_controller_velocity.cpp
+  src/ARCmodel_reaching.cpp
 )
 
 add_dependencies(franka_example_controllers

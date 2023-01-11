@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<launch>
+   <arg name="arm_id"/> 
+   <arg name="load_gripper" default="true"/>
+
+   <group if="$(eval arm_id == 'panda_1')">
+      <include file="$(find franka_example_controllers)/launch/single_arm_move_to_initial.launch">
+         <arg name="robot_ip" value="172.16.0.2"/>
+         <arg name="arm_id" value="panda_1"/>
+         <arg name="has_gripper" value="$(arg load_gripper)"/>
+         <arg name="joint_goal0" value="0.461386882247"/>
+         <arg name="joint_goal1" value="0.145821063849"/>
+         <arg name="joint_goal2" value="0.101295767712"/>
+         <arg name="joint_goal3" value="-2.57584711726"/>
+         <arg name="joint_goal4" value="-0.0357269777981"/>
+         <arg name="joint_goal5" value="2.72000044056"/>
+         <arg name="joint_goal6" value="-0.191149552204"/>
+      </include>  
+   </group>
+
+   <group if="$(eval arm_id == 'panda_2')">
+      <include file="$(find franka_example_controllers)/launch/single_arm_move_to_initial.launch">
+         <arg name="robot_ip" value="172.16.0.3"/>
+         <arg name="arm_id" value="panda_2"/>
+         <arg name="has_gripper" value="$(arg load_gripper)"/>
+         <arg name="joint_goal0" value="0.238914121884"/>
+         <arg name="joint_goal1" value="0.209264929497"/>
+         <arg name="joint_goal2" value="-0.785053828347"/>
+         <arg name="joint_goal3" value="-2.57481261078"/>
+         <arg name="joint_goal4" value="0.350121464377"/>
+         <arg name="joint_goal5" value="2.69959465816"/>
+         <arg name="joint_goal6" value="-1.63988584478"/>
+      </include>  
+   </group>
+
+</launch>

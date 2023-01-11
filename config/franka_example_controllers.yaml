@@ -109,8 +109,20 @@ cartesian_admittance_controller_pose:
         - panda_joint6
         - panda_joint7
 
-cartesian_admittance_controller_torque:
-    type: franka_example_controllers/CartesianAdmittanceControllerTorque
+operational_space_controller:
+    type: franka_example_controllers/OperationalSpaceController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+ARCmodel_reaching:
+    type: franka_example_controllers/ARCmodel_reaching
     arm_id: panda
     joint_names:
         - panda_joint1
