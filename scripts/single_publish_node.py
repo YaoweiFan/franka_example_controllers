@@ -83,12 +83,14 @@ if __name__ == "__main__":
         ori_table.add_row([panda1_eef_quat[0], panda1_eef_quat[1], panda1_eef_quat[2], panda1_eef_quat[3]])
         print(ori_table)
 
-        delta_pos = np.array([0.01, 0.01, 0.01])
+        delta_pos = np.array([0.02, 0.02, 0.02])
         panda1_pose["position"] += delta_pos
 
-        print("============ Press `Enter` to execute a step ...")
-        raw_input()
+        rospy.sleep(3)
 
         # update new equilibrium pose
         set_pub_msgs(link_name_1)
         steps += 1
+        if steps == 5:
+            raw_input()
+

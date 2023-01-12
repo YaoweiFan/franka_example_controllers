@@ -100,12 +100,12 @@ bool OperationalSpaceController::init(hardware_interface::RobotHW* robot_hw,
   // cartesian_inertia_.bottomRightCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
 
   cartesian_stiffness_.setZero();
-  cartesian_stiffness_.topLeftCorner(3,3) = 500.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
-  cartesian_stiffness_.bottomRightCorner(3,3) = 100.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
+  cartesian_stiffness_.topLeftCorner(3,3) = 1000.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
+  cartesian_stiffness_.bottomRightCorner(3,3) = 5000.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
 
   cartesian_damping_.setZero();
-  cartesian_damping_.topLeftCorner(3,3) = 2.0 * sqrt(500.0 * 1.0 * 1.0) * Eigen::MatrixXd::Identity(3,3);
-  cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(100.0 * 1.0 * 1.0) * Eigen::MatrixXd::Identity(3,3);
+  cartesian_damping_.topLeftCorner(3,3) = 2.0 * sqrt(1000.0 * 1.0 * 1.0) * Eigen::MatrixXd::Identity(3,3);
+  cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(5000.0 * 1.0 * 1.0) * Eigen::MatrixXd::Identity(3,3);
 
   twist_.setZero();
 
@@ -166,17 +166,17 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
 
   // 从控制器获得的动力学参数
-  // std::array<double, 49> mass_matrix_array = model_handle_->getMass();
-  // Eigen::Map<Eigen::Matrix<double, 7, 7>> mass_matrix(mass_matrix_array.data());
-  // std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
-  // Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
+  std::array<double, 49> mass_matrix_array = model_handle_->getMass();
+  Eigen::Map<Eigen::Matrix<double, 7, 7>> mass_matrix(mass_matrix_array.data());
+  std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data());
   // Eigen::Matrix<double, 7, 1> friction; friction.setZero(); // 控制器的反馈信息没有携带摩擦力这一项
 
   // 辨识得到的动力学参数
-  Eigen::Matrix<double, 7, 7> mass_matrix = MassMatrix(q);
-  Eigen::Matrix<double, 7, 1> coriolis = CoriolisMatrix(q, dq) * dq;
-  Eigen::Matrix<double, 7, 1> friction = Friction(dq);
+  // Eigen::Matrix<double, 7, 7> mass_matrix = MassMatrix(q);
+  // Eigen::Matrix<double, 7, 1> coriolis = CoriolisMatrix(q, dq) * dq;
+  // Eigen::Matrix<double, 7, 1> friction = Friction(dq);
 
   // 计算 lambda matrices (J * M^-1 * J^T)^-1
   auto lambda_inv =  jacobian * mass_matrix.inverse() * jacobian.transpose();
@@ -184,22 +184,22 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
 
   // *****************************************************************************************
   // 期望位置通过点到点路径规划获得
-  double refx[4],refy[4],refz[4];
-  p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.5, refx);
-  p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.5, refy);
-  p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.5, refz);
+  // double refx[4],refy[4],refz[4];
+  // p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.1, refx);
+  // p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.1, refy);
+  // p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.1, refz);
 
-  position_d_[0] =  position_initial_[0] + refx[0];
-  position_d_dot_[0] = refx[1];
-  position_d_dot_dot_[0] = refx[2];
+  // position_d_[0] =  position_initial_[0] + refx[0];
+  // position_d_dot_[0] = refx[1];
+  // position_d_dot_dot_[0] = refx[2];
 
-  position_d_[1] =  position_initial_[1] + refy[0];
-  position_d_dot_[1] = refy[1];
-  position_d_dot_dot_[1] = refy[2];
+  // position_d_[1] =  position_initial_[1] + refy[0];
+  // position_d_dot_[1] = refy[1];
+  // position_d_dot_dot_[1] = refy[2];
 
-  position_d_[2] =  position_initial_[2] + refz[0];
-  position_d_dot_[2] = refz[1];
-  position_d_dot_dot_[2] = refz[2];
+  // position_d_[2] =  position_initial_[2] + refz[0];
+  // position_d_dot_[2] = refz[1];
+  // position_d_dot_dot_[2] = refz[2];
   // *****************************************************************************************
 
   // 计算当前位置与期望位置之间的误差（位置误差和方向误差）

@@ -23,10 +23,10 @@
     
     </group>
 
-    <!-- <node name="single_publish_node" pkg="franka_example_controllers" type="single_publish_node.py" output="screen">
+    <node name="single_publish_node" pkg="franka_example_controllers" type="single_publish_node.py" output="screen">
         <param name="link_name_1" value="panda_link0" />
         <remap from="panda_1_equilibrium_pose" to="/panda_1/operational_space_controller/equilibrium_pose" />
-    </node> -->
+    </node>
 
     <!-- <node pkg="rviz" type="rviz" output="screen" name="rviz" /> -->
 </launch>
