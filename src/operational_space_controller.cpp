@@ -261,7 +261,7 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   info_msg.posy_d = position_d_[1];
   info_msg.posz_d = position_d_[2];
   Eigen::Vector3d euler_d = orientation_d_.matrix().eulerAngles(2,1,0); // 目标欧拉角 Z-Y-X (R-P-Y)
-  Eigen::Vector3d euler_c = transform.linear().eulerAngles(2,1,0); // 当前欧拉角 Z-Y-X (R-P-Y)
+  Eigen::Vector3d euler_c = orientation.matrix().eulerAngles(2,1,0); // 当前欧拉角 Z-Y-X (R-P-Y)
   info_msg.euler_z_d = euler_d[0];
   info_msg.euler_y_d = euler_d[1];
   info_msg.euler_x_d = euler_d[2];
