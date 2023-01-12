@@ -49,6 +49,7 @@ class OperationalSpaceController
   double angular_max_vel_{0.5};
 
   double nullspace_stiffness_{20.0};
+  double nullspace_damping_{10.0};
   const double delta_tau_max_{1.0};
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
 

@@ -95,9 +95,9 @@ bool OperationalSpaceController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  cartesian_inertia_.setZero();
-  cartesian_inertia_.topLeftCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
-  cartesian_inertia_.bottomRightCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
+  // cartesian_inertia_.setZero();
+  // cartesian_inertia_.topLeftCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
+  // cartesian_inertia_.bottomRightCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
 
   cartesian_stiffness_.setZero();
   cartesian_stiffness_.topLeftCorner(3,3) = 500.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
@@ -227,10 +227,7 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   tau_task << jacobian.transpose() * decoupled_wrench;
 
   auto jbar = mass_matrix.inverse() * jacobian.transpose() * lambda;
-  tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
-                    jbar * jacobian).transpose() * mass_matrix *
-                       (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                        (2.0 * sqrt(nullspace_stiffness_)) * dq);
+  tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jbar.transpose()) * mass_matrix * (nullspace_stiffness_ * (q_d_nullspace_ - q) - nullspace_damping_ * dq);
 
   Eigen::Matrix<double, 6, 7> jacobian_dot;
   if (period.toSec() < 0.000001) {
