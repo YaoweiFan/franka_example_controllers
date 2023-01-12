@@ -131,7 +131,9 @@ namespace franka_example_controllers
     // initial_pose_ = initial_state.O_T_EE_d;
     Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(initial_state.O_T_EE.data()));
     r0_pos = initial_transform.translation();
+    // std::cout << r0_pos << std::endl;
     r0_ori = Eigen::Quaterniond(initial_transform.linear());
+    // std::cout << initial_transform.linear() << std::endl;
     array<double, 42> initial_jacobian = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
     Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian_0(initial_jacobian.data());
     jacobian0 = jacobian_0;
@@ -166,7 +168,7 @@ namespace franka_example_controllers
     // D_d(2,2) = 2.0 * sqrt(100.0) * 1.0;
 
     K_f.setIdentity();
-    K_f.topLeftCorner(3, 3) << 1.0 * Eigen::Matrix3d::Identity();
+    K_f.topLeftCorner(3, 3) << -1.0 * Eigen::Matrix3d::Identity();
     K_f.bottomRightCorner(3, 3) << 0.01 * Eigen::Matrix3d::Identity();
     // K_f(2,2) = -0.5;//-1.0;
     
@@ -243,19 +245,21 @@ namespace franka_example_controllers
     }
 
     // 点到点路径规划
-    double refx[4],refy[4],refz[4];
-    p2p(elapsed_time_.toSec(), Ts_, 0.2, 0.1, 0.5, refx);
-    p2p(elapsed_time_.toSec(), Ts_, 0.2, 0.1, 0.5, refy);
-    p2p(elapsed_time_.toSec(), Ts_, 0.2, 0.1, 0.5, refz);
+    double refx[4] = {0};
+    double refy[4] = {0};
+    double refz[4] = {0};
+    // p2p(elapsed_time_.toSec(), Ts_, 0.1, 0.1, 0.5, refx);
+    // p2p(elapsed_time_.toSec(), Ts_, 0.1, 0.1, 0.5, refy);
+    // p2p(elapsed_time_.toSec(), Ts_, 0.1, 0.1, 0.5, refz);
 
     
     rd_pos[0] = refx[0] + r0_pos[0];
     rd_dot[0] = refx[1];
     rd_ddot[0] = refx[2];
 
-    rd_pos[1] = -refy[0] + r0_pos[1];
-    rd_dot[1] = -refy[1];
-    rd_ddot[1] = -refy[2];
+    rd_pos[1] = refy[0] + r0_pos[1];
+    rd_dot[1] = refy[1];
+    rd_ddot[1] = refy[2];
 
     rd_pos[2] = refz[0] + r0_pos[2];
     rd_dot[2] = refz[1];

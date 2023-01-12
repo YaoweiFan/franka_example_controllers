@@ -80,8 +80,6 @@ class OperationalSpaceController
   Vector6d ft_;
   Vector6d ft_filtered_;
 
-  Eigen::Matrix<double, 3, 3> ee2ft_ori;
-
   // Equilibrium pose subscriber
   ros::Subscriber sub_equilibrium_pose_;
   void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);

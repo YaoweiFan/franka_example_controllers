@@ -83,7 +83,7 @@ if __name__ == "__main__":
         ori_table.add_row([panda1_eef_quat[0], panda1_eef_quat[1], panda1_eef_quat[2], panda1_eef_quat[3]])
         print(ori_table)
 
-        delta_pos = np.array([0.0, 0.0, 0.01])
+        delta_pos = np.array([0.01, 0.01, 0.01])
         panda1_pose["position"] += delta_pos
 
         print("============ Press `Enter` to execute a step ...")

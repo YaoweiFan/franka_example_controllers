@@ -79,6 +79,8 @@ add_library(franka_example_controllers
   src/operational_space_controller.cpp
   src/cartesian_admittance_controller_velocity.cpp
   src/ARCmodel_reaching.cpp
+  src/p2p.cpp
+  src/iden_dynamics.cpp
 )
 
 add_dependencies(franka_example_controllers

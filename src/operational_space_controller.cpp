@@ -97,15 +97,15 @@ bool OperationalSpaceController::init(hardware_interface::RobotHW* robot_hw,
 
   cartesian_inertia_.setZero();
   cartesian_inertia_.topLeftCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
-  cartesian_inertia_.bottomRightCorner(3,3) = 0.01 * Eigen::MatrixXd::Identity(3,3);
+  cartesian_inertia_.bottomRightCorner(3,3) = 1.0 * Eigen::MatrixXd::Identity(3,3);
 
   cartesian_stiffness_.setZero();
   cartesian_stiffness_.topLeftCorner(3,3) = 500.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
-  cartesian_stiffness_.bottomRightCorner(3,3) = 100.0 * 0.01 * Eigen::MatrixXd::Identity(3,3);
+  cartesian_stiffness_.bottomRightCorner(3,3) = 100.0 * 1.0 * Eigen::MatrixXd::Identity(3,3);
 
   cartesian_damping_.setZero();
   cartesian_damping_.topLeftCorner(3,3) = 2.0 * sqrt(500.0 * 1.0 * 1.0) * Eigen::MatrixXd::Identity(3,3);
-  cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(100.0 * 0.01 * 0.01) * Eigen::MatrixXd::Identity(3,3);
+  cartesian_damping_.bottomRightCorner(3,3) = 2.0 * sqrt(100.0 * 1.0 * 1.0) * Eigen::MatrixXd::Identity(3,3);
 
   twist_.setZero();
 
@@ -113,11 +113,7 @@ bool OperationalSpaceController::init(hardware_interface::RobotHW* robot_hw,
   ft_d_.setZero();
   ft_filtered_.setZero();
 
-  ee2ft_ori << 0.7071, -0.7071, 0,
-               0.7071,  0.7071, 0,
-                    0,       0, 1;
-
-  // 发布 debug 消息
+  // 发布 info 消息
   pub_ = node_handle.advertise<franka_example_controllers::info>("info_msg", 1000);
 
   return true;
@@ -143,6 +139,8 @@ void OperationalSpaceController::starting(const ros::Time& /* time */) {
   std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
   jacobian_ = jacobian;
+
+  elapsed_time_ = ros::Duration(0.0);
 }
 
 void OperationalSpaceController::update(const ros::Time& /* time */,
@@ -155,11 +153,11 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
 
   elapsed_time_ += period;
 
-  ft_filtered_ = 0.99 * ft_filtered_ + 0.01 * ft_;
-  // 外力在基坐标系下的表示，需要确认一下 ee2ft_ori 是否是 eef 坐标系在传感器坐标系下的表示?
+  // 获得外力在基坐标系下的表示
   Vector6d external_force_base;
-  external_force_base.head(3) = transform.linear() * ee2ft_ori * ft_filtered_.head(3);
-  external_force_base.tail(3) = transform.linear() * ee2ft_ori * ft_filtered_.tail(3);
+  ft_filtered_ = ft_; // ft_filtered_ = 0.99 * ft_filtered_ + 0.01 * ft_;
+  external_force_base.head(3) = transform.linear() * ft_filtered_.head(3);
+  external_force_base.tail(3) = transform.linear() * ft_filtered_.tail(3);
 
   // 从控制器获得的运动学参数
   std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
@@ -168,18 +166,17 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
 
   // 从控制器获得的动力学参数
-  std::array<double, 49> mass_matrix_array = model_handle_->getMass();
-  Eigen::Map<Eigen::Matrix<double, 7, 7>> mass_matrix(mass_matrix_array.data());
-  std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
+  // std::array<double, 49> mass_matrix_array = model_handle_->getMass();
+  // Eigen::Map<Eigen::Matrix<double, 7, 7>> mass_matrix(mass_matrix_array.data());
+  // std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
+  // Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data());
-  Eigen::Matrix<double, 7, 1> friction;
-  friction.setZero(); // 控制器的反馈信息没有携带摩擦力这一项
+  // Eigen::Matrix<double, 7, 1> friction; friction.setZero(); // 控制器的反馈信息没有携带摩擦力这一项
 
-  // // 辨识得到的动力学参数
-  // Eigen::Matrix<double, 7, 7> mass_matrix = MassMatrix(q);
-  // Eigen::Matrix<double, 7, 7> coriolis = CoriolisMatrix(q, dq);
-  // Eigen::Matrix<double, 7, 1> friction = Friction(dq);
+  // 辨识得到的动力学参数
+  Eigen::Matrix<double, 7, 7> mass_matrix = MassMatrix(q);
+  Eigen::Matrix<double, 7, 1> coriolis = CoriolisMatrix(q, dq) * dq;
+  Eigen::Matrix<double, 7, 1> friction = Friction(dq);
 
   // 计算 lambda matrices (J * M^-1 * J^T)^-1
   auto lambda_inv =  jacobian * mass_matrix.inverse() * jacobian.transpose();
@@ -188,9 +185,9 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   // *****************************************************************************************
   // 期望位置通过点到点路径规划获得
   double refx[4],refy[4],refz[4];
-  p2p(elapsed_time_.toSec(), period.toSec(), 0.2, 0.1, 0.5, refx);
-  p2p(elapsed_time_.toSec(), period.toSec(), 0.2, 0.1, 0.5, refy);
-  p2p(elapsed_time_.toSec(), period.toSec(), 0.2, 0.1, 0.5, refz);
+  p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.5, refx);
+  p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.5, refy);
+  p2p(elapsed_time_.toSec(), period.toSec(), 0.1, 0.1, 0.5, refz);
 
   position_d_[0] =  position_initial_[0] + refx[0];
   position_d_dot_[0] = refx[1];
@@ -203,15 +200,15 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   position_d_[2] =  position_initial_[2] + refz[0];
   position_d_dot_[2] = refz[1];
   position_d_dot_dot_[2] = refz[2];
-
   // *****************************************************************************************
 
   // 计算当前位置与期望位置之间的误差（位置误差和方向误差）
   Vector6d error;
   error.head(3) << position - position_d_;
   // 求得末端坐标系下表示的方向误差，并将方向误差转换到 base 坐标系下
-  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0)
+  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
     orientation.coeffs() << -orientation.coeffs();
+  }
   Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
   error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
   error.tail(3) << -transform.linear() * error.tail(3);
@@ -225,7 +222,7 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
   x_dot_dot.head(3) = position_d_dot_dot_;
 
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7);
-  Vector6d desired_wrench = x_dot_dot- cartesian_damping_ * error_dot - cartesian_stiffness_ * error;
+  Vector6d desired_wrench = x_dot_dot - cartesian_damping_ * error_dot - cartesian_stiffness_ * error;
   Vector6d decoupled_wrench = lambda * desired_wrench; // -ef
   tau_task << jacobian.transpose() * decoupled_wrench;
 
@@ -235,11 +232,16 @@ void OperationalSpaceController::update(const ros::Time& /* time */,
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
-  auto jacobian_dot = (jacobian - jacobian_) / period.toSec();
+  Eigen::Matrix<double, 6, 7> jacobian_dot;
+  if (period.toSec() < 0.000001) {
+    jacobian_dot.setZero();
+  } else {
+    jacobian_dot = (jacobian - jacobian_) / period.toSec();
+  }
+
   jacobian_ = jacobian;
   auto h = jacobian.transpose() * lambda * jacobian_dot * dq;
-  tau_d << tau_task + coriolis - h + jacobian.transpose()*external_force_base + tau_nullspace; // + friction
-
+  tau_d << tau_task + coriolis - h - jacobian.transpose()*external_force_base + tau_nullspace; // + friction
 
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
   for (size_t i = 0; i < 7; ++i) {
